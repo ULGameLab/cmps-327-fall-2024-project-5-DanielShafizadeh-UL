@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 // FSM States for the enemy
 public enum EnemyState { STATIC, CHASE, REST, MOVING, DEFAULT };
@@ -117,6 +118,7 @@ public class Enemy : MonoBehaviour
                 //if target reached
                 if (Vector3.Distance(transform.position, targetTile.gameObject.transform.position) <= 0.05f)
                 {
+
                     currentTile = targetTile;
                     state = EnemyState.DEFAULT;
                 }
@@ -131,12 +133,109 @@ public class Enemy : MonoBehaviour
     // TODO: Enemy chases the player when it is nearby
     private void HandleEnemyBehavior2()
     {
-        
+        switch (state)
+        {
+            case EnemyState.DEFAULT: // generate random path 
+
+                //Changed the color to white to differentiate from other enemies
+                material.color = Color.red;
+
+                if (path.Count <= 0) path = pathFinder.RandomPath(currentTile, maxCounter);
+
+                if (path.Count > 0)
+                {
+                    targetTile = path.Dequeue();
+                    state = EnemyState.MOVING;
+                }
+                break;
+
+            case EnemyState.MOVING:
+                //move
+                velocity = targetTile.gameObject.transform.position - transform.position;
+                transform.position = transform.position + (velocity.normalized * speed) * Time.deltaTime;
+                if (Vector3.Distance(transform.position, playerGameObject.transform.position) <= visionDistance)
+                {
+                    path = pathFinder.FindPathAStar(currentTile, playerGameObject.GetComponent<Player>().targetTile);
+                    targetTile=path.Dequeue();
+                    state =EnemyState.CHASE ;
+                    playerCloseCounter++;
+                }
+                //if target reached
+                if ((Vector3.Distance(transform.position, targetTile.gameObject.transform.position) <= 0.05f)||(playerCloseCounter>=maxCounter))
+                {
+                    currentTile = targetTile;
+                    state = EnemyState.DEFAULT;
+                }
+
+                break;
+            case EnemyState.CHASE:
+                if ((Vector3.Distance(transform.position, targetTile.gameObject.transform.position) <= 0.05f) || (playerCloseCounter >= maxCounter))
+                {
+                    currentTile = targetTile;
+                    state = EnemyState.DEFAULT;
+                }
+
+                break;
+            default:
+                state = EnemyState.DEFAULT;
+                break;
+        }
+
     }
 
     // TODO: Third behavior (Describe what it does)
     private void HandleEnemyBehavior3()
     {
+        switch (state)
+        {
+            case EnemyState.DEFAULT: // generate random path 
+
+                //Changed the color to white to differentiate from other enemies
+              
+
+                if (path.Count <= 0) path = pathFinder.RandomPath(currentTile, maxCounter);
+
+                if (path.Count > 0)
+                {
+                    targetTile = path.Dequeue();
+                    state = EnemyState.MOVING;
+                }
+                break;
+
+            case EnemyState.MOVING:
+                //move
+                velocity = targetTile.gameObject.transform.position - transform.position;
+                transform.position = transform.position + (velocity.normalized * speed) * Time.deltaTime;
+                if (Vector3.Distance(transform.position, playerGameObject.transform.position) <= visionDistance)
+                {
+                    int rand1=UnityEngine.Random.Range(0, playerGameObject.GetComponent<Player>().targetTile.Adjacents.Count);
+                    int rand2 = UnityEngine.Random.Range(0, playerGameObject.GetComponent<Player>().targetTile.Adjacents[rand1].Adjacents.Count);
+                   Tile  newtile= playerGameObject.GetComponent<Player>().targetTile.Adjacents[rand1].Adjacents[rand2];
+                    path = pathFinder.FindPathAStar(currentTile,newtile );
+                    targetTile = path.Dequeue();
+                    state = EnemyState.CHASE;
+                    playerCloseCounter++;
+                }
+                //if target reached
+                if ((Vector3.Distance(transform.position, targetTile.gameObject.transform.position) <= 0.05f) || (playerCloseCounter >= maxCounter))
+                {
+                    currentTile = targetTile;
+                    state = EnemyState.DEFAULT;
+                }
+
+                break;
+            case EnemyState.CHASE:
+                if ((Vector3.Distance(transform.position, targetTile.gameObject.transform.position) <= 0.05f) || (playerCloseCounter >= maxCounter))
+                {
+                    currentTile = targetTile;
+                    state = EnemyState.DEFAULT;
+                }
+
+                break;
+            default:
+                state = EnemyState.DEFAULT;
+                break;
+        }
 
     }
 }

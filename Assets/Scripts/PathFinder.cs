@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using MapGen;
+using Unity.IO.LowLevel.Unsafe;
 
 public class Node
 {
@@ -59,6 +60,12 @@ public class PathFinder
             foreach (Tile nextTile in current.tile.Adjacents)
             {
                 
+                double prio = Vector2.Distance(new Vector2(nextTile.indexX, nextTile.indexY),new Vector2(goal.indexX,goal.indexY));
+                double cost = Vector2.Distance(new Vector2(current.tile.indexX, current.tile.indexY),new Vector2(nextTile.indexX, nextTile.indexY)) + current.costSoFar;
+                Node newNode = new Node(nextTile,prio,current,cost);
+                TODOList.Add(newNode);
+               
+                
             }
         }
         return new Queue<Tile>(); // Returns an empty Path if no path is found
@@ -92,6 +99,7 @@ public class PathFinder
             // Just increase the F cost of the enemy tile and the tiles around it by a certain ammount (say 30)
             foreach (Tile nextTile in current.tile.Adjacents)
             {
+
 
             }
         }
